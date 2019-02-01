@@ -83,6 +83,7 @@ func (alloc *allocateAction) Execute(ssn *framework.Session) {
 		}
 
 		job := jobs.Pop().(*api.JobInfo)
+
 		if _, found := pendingTasks[job.UID]; !found {
 			tasks := util.NewPriorityQueue(ssn.TaskOrderFn)
 			for _, task := range job.TaskStatusIndex[api.Pending] {
@@ -98,7 +99,6 @@ func (alloc *allocateAction) Execute(ssn *framework.Session) {
 			pendingTasks[job.UID] = tasks
 		}
 		tasks := pendingTasks[job.UID]
-
 		glog.V(3).Infof("Try to allocate resource to %d tasks of Job <%v/%v>",
 			tasks.Len(), job.Namespace, job.Name)
 
@@ -142,6 +142,7 @@ func (alloc *allocateAction) Execute(ssn *framework.Session) {
 					//store information about missing resources
 					job.NodesFitDelta[node.Name] = node.Idle.Clone()
 					job.NodesFitDelta[node.Name].FitDelta(task.Resreq)
+
 					glog.V(3).Infof("Predicates failed for task <%s/%s> on node <%s> with limited resources",
 						task.Namespace, task.Name, node.Name)
 				}
@@ -165,6 +166,10 @@ func (alloc *allocateAction) Execute(ssn *framework.Session) {
 				jobs.Push(job)
 				// Handle one assigned task in each loop.
 				break
+			} else {
+				// Update age_count for the unprocessed job within the queue
+				job.Age_count++;
+				job.RefreshRuntime_Priority()
 			}
 
 			// If current task is not assgined, try to fit all rest tasks.

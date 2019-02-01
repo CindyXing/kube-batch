@@ -31,6 +31,11 @@ import (
 	"github.com/kubernetes-sigs/kube-batch/pkg/apis/utils"
 )
 
+const (
+	Priority_WeightFactor = 1
+	Priority_AgeFactor = 0.1
+)
+
 type TaskID types.UID
 
 type TaskInfo struct {
@@ -45,6 +50,7 @@ type TaskInfo struct {
 	NodeName    string
 	Status      TaskStatus
 	Priority    int32
+	Runtime_priority int32
 	VolumeReady bool
 
 	Pod *v1.Pod
@@ -124,6 +130,8 @@ type JobInfo struct {
 	Queue QueueID
 
 	Priority int
+	Runtime_priority int
+	Age_count int
 
 	NodeSelector map[string]string
 	MinAvailable int32
@@ -156,6 +164,9 @@ func NewJobInfo(uid JobID) *JobInfo {
 
 		TaskStatusIndex: map[TaskStatus]tasksMap{},
 		Tasks:           tasksMap{},
+		Priority: 0,
+		Runtime_priority: 0,
+		Age_count 0,
 	}
 }
 
@@ -225,6 +236,23 @@ func (ji *JobInfo) addTaskIndex(ti *TaskInfo) {
 	ji.TaskStatusIndex[ti.Status][ti.UID] = ti
 }
 
+func (ji *JobInfo) RefreshJobInfoPriority() {
+	var priority int32
+	priority = 0
+
+	for _, task := range ji.Tasks {
+		if (priority < task.Priority) {
+			priority = task.Priority
+		}
+	}
+
+	ji.Priority = priority.Int()
+}
+
+func (ji *JobInfo) RefreshJobInfoRuntimePriority() {
+	ji.Runtime_priority = ji.Priority * Priority_WeightFactor.Int() + ji.age_count * Priority_AgeFactor.Int()
+}
+
 func (ji *JobInfo) AddTaskInfo(ti *TaskInfo) {
 	ji.Tasks[ti.UID] = ti
 	ji.addTaskIndex(ti)
@@ -234,6 +262,8 @@ func (ji *JobInfo) AddTaskInfo(ti *TaskInfo) {
 	if AllocatedStatus(ti.Status) {
 		ji.Allocated.Add(ti.Resreq)
 	}
+
+	ji.RefreshJobInfoPriority()
 }
 
 func (ji *JobInfo) UpdateTaskStatus(task *TaskInfo, status TaskStatus) error {
@@ -270,6 +300,7 @@ func (ji *JobInfo) DeleteTaskInfo(ti *TaskInfo) error {
 		}
 
 		delete(ji.Tasks, task.UID)
+		ji.RefreshJobInfoPriority()
 
 		ji.deleteTaskIndex(task)
 		return nil
@@ -297,6 +328,8 @@ func (ji *JobInfo) Clone() *JobInfo {
 
 		TaskStatusIndex: map[TaskStatus]tasksMap{},
 		Tasks:           tasksMap{},
+		Priority: ji.Priority,
+		Runtime_priority:ji.Runtime_priority,
 	}
 
 	ji.CreationTimestamp.DeepCopyInto(&info.CreationTimestamp)
