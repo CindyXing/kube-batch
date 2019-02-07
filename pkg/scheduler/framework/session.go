@@ -136,6 +136,8 @@ func closeSession(ssn *Session) {
 			continue
 		}
 
+                ssn.cache.UpdateJobAgeCount(job)
+
 		job.PodGroup.Status = jobStatus(ssn, job)
 		if _, err := ssn.cache.UpdateJobStatus(job); err != nil {
 			glog.Errorf("Failed to update job <%s/%s>: %v",

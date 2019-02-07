@@ -40,6 +40,10 @@ func NewPriorityQueue(lessFn api.LessFn) *PriorityQueue {
 	}
 }
 
+func (q *PriorityQueue) Items() [] interface{} {
+	return q.queue.items
+}
+
 func (q *PriorityQueue) Push(it interface{}) {
 	heap.Push(&q.queue, it)
 }

@@ -83,6 +83,11 @@ func (alloc *allocateAction) Execute(ssn *framework.Session) {
 		}
 
 		job := jobs.Pop().(*api.JobInfo)
+                for _, tmpJob := range jobs.Items() {
+                	tmpJob.(*api.JobInfo).Age_count++
+                }
+                
+                glog.V(3).Infof("Try to allocate resource to job %v", job.Name)
 
 		if _, found := pendingTasks[job.UID]; !found {
 			tasks := util.NewPriorityQueue(ssn.TaskOrderFn)
@@ -163,13 +168,9 @@ func (alloc *allocateAction) Execute(ssn *framework.Session) {
 			}
 
 			if assigned {
-				jobs.Push(job)
-				// Handle one assigned task in each loop.
+			        jobs.Push(job)
+			 	// Handle one assigned task in each loop.
 				break
-			} else {
-				// Update age_count for the unprocessed job within the queue
-				job.Age_count++;
-				job.RefreshRuntime_Priority()
 			}
 
 			// If current task is not assgined, try to fit all rest tasks.

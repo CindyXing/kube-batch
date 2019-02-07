@@ -20,6 +20,11 @@ package api
 type TaskStatus int
 
 const (
+	Priority_WeightFactor = 1
+	Priority_AgeFactor = 0.1
+)
+
+const (
 	// Pending means the task is pending in the apiserver.
 	Pending TaskStatus = 1 << iota
 

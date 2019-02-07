@@ -60,7 +60,7 @@ func (pp *priorityPlugin) OnSessionOpen(ssn *framework.Session) {
 		rv := r.(*api.JobInfo)
 
 		glog.V(4).Infof("Priority JobOrderFn: <%v/%v> is ready: %d, <%v/%v> is ready: %d",
-			lv.Namespace, lv.Name, lv.Priority, lv.Runtime_Priority, rv.Namespace, rv.Name, rv.Priority, rv.Runtime_Priority)
+			lv.Namespace, lv.Name, lv.Priority, lv.Age_count, rv.Namespace, rv.Name, rv.Priority, rv.Age_count)
 
 		if lv.Priority > rv.Priority {
 			return -1

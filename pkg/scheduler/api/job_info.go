@@ -31,11 +31,6 @@ import (
 	"github.com/kubernetes-sigs/kube-batch/pkg/apis/utils"
 )
 
-const (
-	Priority_WeightFactor = 1
-	Priority_AgeFactor = 0.1
-)
-
 type TaskID types.UID
 
 type TaskInfo struct {
@@ -50,7 +45,6 @@ type TaskInfo struct {
 	NodeName    string
 	Status      TaskStatus
 	Priority    int32
-	Runtime_priority int32
 	VolumeReady bool
 
 	Pod *v1.Pod
@@ -130,7 +124,6 @@ type JobInfo struct {
 	Queue QueueID
 
 	Priority int
-	Runtime_priority int
 	Age_count int
 
 	NodeSelector map[string]string
@@ -165,8 +158,7 @@ func NewJobInfo(uid JobID) *JobInfo {
 		TaskStatusIndex: map[TaskStatus]tasksMap{},
 		Tasks:           tasksMap{},
 		Priority: 0,
-		Runtime_priority: 0,
-		Age_count 0,
+		Age_count: 0,
 	}
 }
 
@@ -246,11 +238,7 @@ func (ji *JobInfo) RefreshJobInfoPriority() {
 		}
 	}
 
-	ji.Priority = priority.Int()
-}
-
-func (ji *JobInfo) RefreshJobInfoRuntimePriority() {
-	ji.Runtime_priority = ji.Priority * Priority_WeightFactor.Int() + ji.age_count * Priority_AgeFactor.Int()
+	ji.Priority = int(priority)
 }
 
 func (ji *JobInfo) AddTaskInfo(ti *TaskInfo) {
@@ -329,7 +317,7 @@ func (ji *JobInfo) Clone() *JobInfo {
 		TaskStatusIndex: map[TaskStatus]tasksMap{},
 		Tasks:           tasksMap{},
 		Priority: ji.Priority,
-		Runtime_priority:ji.Runtime_priority,
+                Age_count: ji.Age_count,
 	}
 
 	ji.CreationTimestamp.DeepCopyInto(&info.CreationTimestamp)

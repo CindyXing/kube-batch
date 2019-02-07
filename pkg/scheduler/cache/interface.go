@@ -46,6 +46,9 @@ type Cache interface {
 	// Deprecated: remove it after removed PDB support.
 	RecordJobStatusEvent(job *api.JobInfo)
 
+        // UpdateJobAgeCount write the jobs' age count info. to cache
+        UpdateJobAgeCount(job *api.JobInfo)
+
 	// UpdateJobStatus puts job in backlog for a while.
 	UpdateJobStatus(job *api.JobInfo) (*api.JobInfo, error)
 

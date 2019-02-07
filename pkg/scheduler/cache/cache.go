@@ -673,3 +673,11 @@ func (sc *SchedulerCache) UpdateJobStatus(job *kbapi.JobInfo) (*kbapi.JobInfo, e
 
 	return job, nil
 }
+
+// UpdateJobAgeCount update the age_count of the cached job.
+func (sc *SchedulerCache) UpdateJobAgeCount(job *kbapi.JobInfo) {
+	jobCache, found := sc.Jobs[job.UID]
+	if found {
+		jobCache.Age_count = job.Age_count
+	}
+}

@@ -133,8 +133,8 @@ func (gp *gangPlugin) OnSessionOpen(ssn *framework.Session) {
 		lReady := jobReady(lv)
 		rReady := jobReady(rv)
 
-		glog.V(4).Infof("Gang JobOrderFn: <%v/%v> is ready: %t, <%v/%v> is ready: %t",
-			lv.Namespace, lv.Name, lReady, rv.Namespace, rv.Name, rReady)
+		glog.V(4).Infof("Gang JobOrderFn: <%v/%v> is ready: %t:%d, <%v/%v> is ready: %t:%d",
+			lv.Namespace, lv.Name, lReady, lv.Age_count, rv.Namespace, rv.Name, rReady, rv.Age_count)
 
 		if lReady && rReady {
 			return 0
@@ -157,13 +157,25 @@ func (gp *gangPlugin) OnSessionOpen(ssn *framework.Session) {
 				return -1
 			}
 			return 1 */
-			if lv.RuntimePriority > rv.Runtime_Priority {
+                        runtimePriority_lv := float64(lv.Priority) * api.Priority_WeightFactor + float64(lv.Age_count) * api.Priority_AgeFactor
+                        runtimePriority_rv := float64(rv.Priority) * api.Priority_WeightFactor + float64(rv.Age_count) * api.Priority_AgeFactor
+
+			if runtimePriority_lv > runtimePriority_rv {
 				return -1
 			}
 
-			if lv.RuntimePriority < rv.Runtime_Priority {
-				return -1
+			if runtimePriority_lv < runtimePriority_rv {
+				return 1
 			}
+                       
+                        if runtimePriority_lv == runtimePriority_rv {
+                               if len(lv.Tasks) < len(rv.Tasks) {
+                                     return -1
+                               }
+                               if len(lv.Tasks) > len(rv.Tasks) {
+                                     return 1
+                               }
+                       }
 		}
 
 		return 0
